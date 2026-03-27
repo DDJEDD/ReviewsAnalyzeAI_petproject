@@ -1,5 +1,5 @@
 from httpx import AsyncClient
-
+from Validator import LanguageEnum
 
 class AIService:
     def __init__(self,client:AsyncClient, token:str, API_URL:str):
@@ -11,7 +11,7 @@ class AIService:
         if "</think>" in text:
             text = text.split("</think>")[-1]
         return text.strip()
-    async def send_request(self,feed_text:str):
+    async def send_request(self,feed_text:str,country_code:LanguageEnum):
         response = {
             "model": "deepseek-ai/DeepSeek-R1:fastest",
             "messages": [
@@ -24,7 +24,9 @@ class AIService:
                         "Не пиши рассуждения. "
                         "Не используй <think>. "
                         "Не упоминай отзывы. "
-                        "Ответ 1-2 предложения."
+                        "Разложеный ответ."
+                        "Вывод в конце."
+                        f"Напиши ответ на {country_code}."
                     )
                 },
                 {

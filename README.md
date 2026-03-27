@@ -140,6 +140,3 @@ Authorization: Bearer <your_token>
 | `DB_HOST`           | PostgreSQL host                             |
 | `BEARER_TOKEN`      | Bearer token for H.F                        |
 | `API_URL`           | Hugging Face URL(recommended to not change) |
-
-## Important information
-However, project is WIP, so AI can speak only in russian for now. Upcoming Pydantic validation will be added soon.

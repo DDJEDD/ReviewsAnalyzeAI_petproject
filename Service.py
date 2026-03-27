@@ -1,5 +1,6 @@
 from Repository import ProductRepository, ReviewRepository
 from  Exceptions.Service import ProductAlreadyExists, ProductDoesntExists
+from Validator import CreateReview
 class Service:
     def __init__(self, session, ProductRepository: ProductRepository, ReviewRepository: ReviewRepository ):
         self.session = session
@@ -11,11 +12,11 @@ class Service:
                 raise ProductAlreadyExists()
             await self.ProductDirectory.createProduct(name)
         return {"Status":"Successful"}
-    async def add_review(self,username:str, text:str,product_id:int):
+    async def add_review(self,CreateReview:CreateReview):
         async with self.session.begin():
-            if not await self.ProductDirectory.CheckProduct_by_id(product_id):
+            if not await self.ProductDirectory.CheckProduct_by_id(CreateReview.product_id):
                 raise ProductDoesntExists()
-            await self.ReviewRepository.create_review(username,text,product_id)
+            await self.ReviewRepository.create_review(CreateReview.username,CreateReview.text,CreateReview.product_id)
         return {"Status":"Successful"}
 
     async def get_reviews_by_id(self, id: int):
