@@ -4,9 +4,10 @@ from Database.models import Product
 class ProductRepository:
     def __init__(self ,session):
         self.session = session
-    async def createProduct(self, name:str):
+    async def createProduct(self, name:str, value:str):
         new_product = Product(
-            name=name
+            name=name,
+            value=value
         )
         self.session.add(new_product)
         return new_product
@@ -15,6 +16,11 @@ class ProductRepository:
         res = await self.session.execute(stmt)
         product = res.scalar_one_or_none()
         return product is not None
+    async def GetProducts(self):
+        stmt = Select(Product)
+        res = await self.session.execute(stmt)
+        product = res.scalars().all()
+        return product
     async def CheckProduct_by_id(self, id:int):
         stmt = Select(Product).where(Product.id == id)
         res = await self.session.execute(stmt)

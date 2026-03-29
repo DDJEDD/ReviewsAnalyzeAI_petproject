@@ -8,6 +8,7 @@ class Product(Base):
     __tablename__ = "products"
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    value = Column(String, nullable=False)
     reviews = relationship("Review", back_populates="product")
 
 

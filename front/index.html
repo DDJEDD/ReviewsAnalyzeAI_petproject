@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProductBase</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080c10;--s1:#0e1318;--s2:#141b22;--s3:#1c2530;
+  --border:#232d38;--border2:#2e3d4e;
+  --acc:#00e5ff;--acc2:#ff6b6b;--acc3:#a8ff78;
+  --text:#e8f0f8;--muted:#5a7080;--muted2:#3d5263;
+}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;line-height:1.6;}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0;
+}
+header{
+  position:sticky;top:0;z-index:200;
+  background:rgba(8,12,16,0.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-0.03em;}
+.logo em{color:var(--acc);font-style:normal;}
+#api-health{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);transition:background 0.3s;}
+.dot.online{background:var(--acc3);box-shadow:0 0 6px var(--acc3);}
+.dot.offline{background:var(--acc2);}
+nav{display:flex;border-bottom:1px solid var(--border);padding:0 2rem;background:var(--s1);position:sticky;top:60px;z-index:190;}
+.tab{padding:0.85rem 1.4rem;font-family:'Syne',sans-serif;font-weight:600;font-size:0.82rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;border-radius:0;transition:all 0.2s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc);}
+main{max-width:980px;margin:0 auto;padding:2.5rem 2rem;position:relative;z-index:1;}
+.view{display:none;animation:fadeUp 0.25s ease;}
+.view.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-0.03em;margin-bottom:0.3rem;}
+.page-sub{font-size:0.88rem;color:var(--muted);margin-bottom:2rem;}
+.tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:2px 8px;border-radius:4px;letter-spacing:0.05em;margin-bottom:0.6rem;}
+.tag.post{background:rgba(255,107,107,0.1);color:var(--acc2);border:1px solid rgba(255,107,107,0.2);}
+.tag.get{background:rgba(168,255,120,0.1);color:var(--acc3);border:1px solid rgba(168,255,120,0.2);}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.75rem;margin-bottom:1.5rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:600px){.form-row{grid-template-columns:1fr;}}
+.field{margin-bottom:1.1rem;}
+label{display:block;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.45rem;}
+input,textarea{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:9px;padding:0.7rem 1rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:0.93rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+input:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,229,255,0.07);}
+textarea{resize:vertical;min-height:80px;}
+.btn{padding:0.65rem 1.5rem;border-radius:9px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.03em;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--acc);color:#080c10;}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-primary:active{transform:translateY(0);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;filter:none!important;}
+
+/* Products */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;}
+.product-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.4rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.product-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2));opacity:0;transition:opacity 0.2s;}
+.product-card:hover{border-color:rgba(0,229,255,0.3);transform:translateY(-2px);}
+.product-card:hover::after{opacity:1;}
+.p-id{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--muted);margin-bottom:0.4rem;}
+.p-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:0.35rem;}
+.p-footer{display:flex;align-items:center;justify-content:space-between;padding-top:0.8rem;border-top:1px solid var(--border);}
+
+/* Reviews */
+.review-item{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:0.8rem;animation:fadeUp 0.2s ease;transition:border-color 0.2s;}
+.review-item:hover{border-color:var(--border2);}
+.review-top{display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;flex-shrink:0;border:2px solid transparent;}
+.review-meta{flex:1;min-width:0;}
+.review-username{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;display:block;}
+.review-id{font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--muted);}
+.review-text{font-size:0.88rem;color:var(--muted);line-height:1.65;}
+
+/* Detail */
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--muted);margin-bottom:1.5rem;}
+.breadcrumb a{color:var(--acc);cursor:pointer;}
+.breadcrumb a:hover{text-decoration:underline;}
+.detail-grid{display:grid;grid-template-columns:1fr;gap:1rem;margin-bottom:1.5rem;}
+.detail-field{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:1rem;}
+.df-label{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;}
+.df-value{font-size:0.93rem;font-weight:500;}
+.section-divider{display:flex;align-items:center;gap:12px;margin:2rem 0 0.8rem;}
+.section-divider h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;white-space:nowrap;}
+.section-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.empty{text-align:center;padding:3rem 2rem;color:var(--muted);font-size:0.88rem;}
+.spinner{width:18px;height:18px;border:2px solid rgba(0,229,255,0.15);border-top-color:var(--acc);border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s2);border:1px solid var(--border2);border-left:3px solid var(--acc);padding:0.9rem 1.3rem;border-radius:11px;font-size:0.85rem;opacity:0;transform:translateY(8px);transition:all 0.25s;z-index:999;max-width:320px;pointer-events:none;}
+#toast.show{opacity:1;transform:translateY(0);}
+#toast.err{border-left-color:var(--acc2);}
+#toast.ok{border-left-color:var(--acc3);}
+
+/* ════════════════════════════════
+   AI PRODUCT BUTTON
+════════════════════════════════ */
+.btn-ai-product{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:0.6rem 1.3rem;
+  border-radius:10px;
+  border:1px solid rgba(168,255,120,0.25);
+  background:linear-gradient(135deg,rgba(168,255,120,0.08),rgba(0,229,255,0.05));
+  color:var(--acc3);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;letter-spacing:0.04em;
+  cursor:pointer;
+  transition:all 0.2s;
+  position:relative;overflow:hidden;
+}
+.btn-ai-product::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(168,255,120,0.12),rgba(0,229,255,0.08));
+  opacity:0;transition:opacity 0.2s;
+}
+.btn-ai-product:hover{
+  border-color:rgba(168,255,120,0.5);
+  transform:translateY(-1px);
+  box-shadow:0 6px 24px rgba(168,255,120,0.12);
+}
+.btn-ai-product:hover::before{opacity:1;}
+.btn-ai-product:active{transform:translateY(0);}
+.btn-ai-product:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+.btn-ai-product .ai-icon{
+  font-size:0.95rem;
+  animation:none;
+  transition:transform 0.3s;
+}
+.btn-ai-product:hover .ai-icon{animation:starSpin2 1.5s linear infinite;}
+@keyframes starSpin2{to{transform:rotate(360deg);}}
+
+/* ════════════════════════════════
+   AI MODAL
+════════════════════════════════ */
+#ai-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(4,8,12,0.9);backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+#ai-overlay.open{opacity:1;pointer-events:all;}
+#ai-modal{
+  background:var(--s1);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  width:100%;max-width:520px;max-height:85vh;
+  display:flex;flex-direction:column;
+  transform:translateY(28px) scale(0.95);
+  transition:transform 0.38s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;overflow:hidden;
+}
+#ai-overlay.open #ai-modal{transform:translateY(0) scale(1);}
+
+/* Animated glow border top */
+#ai-modal::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,var(--acc3) 25%,var(--acc) 50%,var(--acc3) 75%,transparent 100%);
+  background-size:200% 100%;
+  animation:glowMove 2.8s linear infinite;
+  z-index:1;
+}
+@keyframes glowMove{0%{background-position:100% 0;}100%{background-position:-100% 0;}}
+
+/* Corner glow */
+#ai-modal::after{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(168,255,120,0.05) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.ai-head{
+  padding:1.3rem 1.5rem 1rem;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:2;
+}
+.ai-head-left{display:flex;align-items:center;gap:12px;}
+.ai-orb{
+  width:46px;height:46px;border-radius:13px;flex-shrink:0;
+  background:linear-gradient(135deg,#071a0f,#071525);
+  border:1px solid rgba(168,255,120,0.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;
+  box-shadow:0 0 24px rgba(168,255,120,0.08) inset, 0 0 40px rgba(168,255,120,0.04);
+  animation:orbPulse 3s ease-in-out infinite;
+}
+@keyframes orbPulse{0%,100%{box-shadow:0 0 24px rgba(168,255,120,0.08) inset,0 0 40px rgba(168,255,120,0.04);}50%{box-shadow:0 0 32px rgba(168,255,120,0.14) inset,0 0 60px rgba(168,255,120,0.08);}}
+.ai-head-title{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;
+  background:linear-gradient(120deg,var(--acc3) 0%,var(--acc) 60%,#c77dff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.ai-head-sub{font-size:0.72rem;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace;}
+.ai-close{background:var(--s2);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;font-size:0.9rem;}
+.ai-close:hover{color:var(--text);border-color:var(--muted);}
+
+/* Product snippet in modal */
+.ai-product-snippet{
+  margin:1rem 1.5rem 0;flex-shrink:0;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(0,229,255,0.1);
+  border-radius:10px;padding:0.8rem 1rem;
+  display:flex;align-items:center;gap:10px;
+}
+.ai-prod-icon{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(0,229,255,0.1),rgba(168,255,120,0.05));
+  border:1px solid rgba(0,229,255,0.15);
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+}
+.ai-prod-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;}
+.ai-prod-id{font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--muted);margin-top:1px;}
+
+.ai-body{padding:1.2rem 1.5rem 1.5rem;overflow-y:auto;flex:1;}
+
+/* Loading state */
+.ai-load{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1rem;gap:1.2rem;}
+.ai-load-ring{
+  width:64px;height:64px;border-radius:50%;
+  border:1.5px solid rgba(168,255,120,0.12);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  animation:ringPulse 2s ease-in-out infinite;
+}
+.ai-load-ring::before{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:1px solid rgba(168,255,120,0.06);
+  animation:ringPulse 2s ease-in-out infinite reverse;
+}
+.ai-load-ring::after{
+  content:'';position:absolute;inset:-16px;border-radius:50%;
+  border:1px solid rgba(168,255,120,0.03);
+  animation:ringPulse 2s ease-in-out infinite;
+  animation-delay:0.5s;
+}
+.ai-load-ring-inner{font-size:1.5rem;animation:starSpin 3s linear infinite;}
+@keyframes ringPulse{0%,100%{box-shadow:0 0 0 0 rgba(168,255,120,0.2);}50%{box-shadow:0 0 0 12px rgba(168,255,120,0);}}
+@keyframes starSpin{0%{transform:rotate(0deg) scale(1);}50%{transform:rotate(180deg) scale(1.15);}100%{transform:rotate(360deg) scale(1);}}
+.ai-load-text{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);text-align:center;line-height:1.7;}
+.ai-load-endpoint{color:var(--muted2);font-size:0.65rem;margin-top:2px;}
+
+/* Result */
+#ai-result{animation:fadeUp 0.3s ease;}
+.ai-result-badge-row{display:flex;align-items:center;gap:8px;margin-bottom:1.1rem;}
+.ai-result-badge{
+  font-family:'JetBrains Mono',monospace;font-size:0.6rem;
+  padding:3px 10px;border-radius:5px;
+  background:linear-gradient(135deg,rgba(168,255,120,0.1),rgba(0,229,255,0.07));
+  color:var(--acc3);border:1px solid rgba(168,255,120,0.22);
+  letter-spacing:0.07em;
+}
+.ai-result-line{height:1px;flex:1;background:linear-gradient(90deg,rgba(168,255,120,0.15),transparent);}
+
+/* ── THE GRADIENT TEXT ── */
+.ai-result-text{
+  font-size:0.95rem;
+  line-height:1.85;
+  white-space:pre-wrap;
+  word-break:break-word;
+  /* Gradient fill */
+  background:linear-gradient(
+    135deg,
+    #a8ff78 0%,
+    #78ffcb 20%,
+    #00e5ff 40%,
+    #48cae4 55%,
+    #c77dff 75%,
+    #ff6b9d 90%,
+    #a8ff78 100%
+  );
+  background-size:200% 200%;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:gradientShift 5s ease infinite;
+}
+@keyframes gradientShift{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+/* Typing cursor blink on load */
+.ai-result-text.typing::after{
+  content:'▋';
+  -webkit-text-fill-color:var(--acc3);
+  animation:blink 0.8s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* Language selector */
+.ai-lang-section{
+  padding:0.9rem 1.5rem;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.ai-lang-label{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--muted2);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.5rem;}
+.ai-lang-grid{display:flex;flex-wrap:wrap;gap:5px;}
+.lang-chip{
+  padding:3px 11px;border-radius:6px;
+  border:1px solid var(--border);background:var(--s2);
+  color:var(--muted);cursor:pointer;
+  font-family:'JetBrains Mono',monospace;font-size:0.67rem;
+  transition:all 0.15s;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.lang-chip:hover:not(.active){border-color:var(--border2);color:var(--text);}
+.lang-chip.active{
+  background:linear-gradient(135deg,rgba(168,255,120,0.12),rgba(0,229,255,0.08));
+  color:var(--acc3);border-color:rgba(168,255,120,0.35);
+  box-shadow:0 0 10px rgba(168,255,120,0.08);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Product<em>Base</em></div>
+  <div id="api-health"><div class="dot" id="status-dot"></div><span id="status-text">checking…</span></div>
+</header>
+
+<nav>
+  <button class="tab active" onclick="showTab('products')">📦 Products</button>
+  <button class="tab" onclick="showTab('create')">＋ New Product</button>
+</nav>
+
+<main>
+
+  <!-- PRODUCTS LIST -->
+  <div class="view active" id="view-products">
+    <div class="tag get">GET /auth/GetProducts</div>
+    <div class="page-title">Product Catalog</div>
+    <div class="page-sub">Click any product to view details, read reviews, or add a new one.</div>
+    <div id="products-container"><div class="empty"><p>No products yet. Create your first one →</p></div></div>
+  </div>
+
+  <!-- CREATE PRODUCT -->
+  <div class="view" id="view-create">
+    <div class="tag post">POST /CreateProduct</div>
+    <div class="page-title">New Product</div>
+    <div class="page-sub">Add a new product to the catalog.</div>
+    <div class="card">
+      <div class="form-row">
+        <div class="field">
+          <label>Product Name *</label>
+          <input type="text" id="cp-name" placeholder="e.g. Wireless Keyboard Pro">
+        </div>
+        <div class="field">
+          <label>Price</label>
+          <input type="text" id="cp-value" placeholder="e.g. 39$">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="cp-btn" onclick="createProduct()">Create Product</button>
+    </div>
+  </div>
+
+  <!-- PRODUCT DETAIL -->
+  <div class="view" id="view-detail">
+    <div class="breadcrumb">
+      <a onclick="showTab('products')">← Products</a><span>/</span><span id="detail-breadcrumb">—</span>
+    </div>
+    <div class="tag get">POST /get — detailed info</div>
+
+    <!-- Title row with AI button -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.3rem;">
+      <div class="page-title" id="detail-name">—</div>
+      <button class="btn-ai-product" id="ai-product-btn" onclick="openProductAI()">
+        <span class="ai-icon">✦</span>
+        AI Analysis
+      </button>
+    </div>
+
+    <div class="page-sub" id="detail-sub">—</div>
+    <div class="detail-grid">
+      <div class="detail-field"><div class="df-label">Product ID</div><div class="df-value" id="d-id">—</div></div>
+    </div>
+
+    <div class="section-divider"><h3>Write a Review</h3></div>
+    <div class="tag post">POST /CreateReview</div>
+    <div class="card" style="margin-top:0.5rem">
+      <div class="form-row">
+        <div class="field">
+          <label>Username *</label>
+          <input type="text" id="rv-username" placeholder="your_username">
+        </div>
+      </div>
+      <div class="field">
+        <label>Review Text *</label>
+        <textarea id="rv-text" placeholder="Share your thoughts…"></textarea>
+      </div>
+      <input type="hidden" id="rv-product-id">
+      <button class="btn btn-primary" id="rv-btn" onclick="createReview()">Post Review</button>
+    </div>
+
+    <div class="section-divider"><h3>Reviews</h3></div>
+    <div class="tag get">GET /get_reviews_by_id</div>
+    <div id="reviews-container" style="margin-top:0.5rem"><div class="empty"><p>Loading…</p></div></div>
+  </div>
+</main>
+
+<!-- AI MODAL -->
+<div id="ai-overlay" onclick="handleOverlayClick(event)">
+  <div id="ai-modal">
+    <div class="ai-head">
+      <div class="ai-head-left">
+        <div class="ai-orb">✦</div>
+        <div>
+          <div class="ai-head-title">AI Product Analysis</div>
+          <div class="ai-head-sub" id="ai-head-sub">GET /auth/getAiReview</div>
+        </div>
+      </div>
+      <button class="ai-close" onclick="closeAI()">✕</button>
+    </div>
+
+    <!-- Product snippet -->
+    <div class="ai-product-snippet" id="ai-prod-snippet">
+      <div class="ai-prod-icon">📦</div>
+      <div>
+        <div class="ai-prod-name" id="ai-prod-name">—</div>
+        <div class="ai-prod-id" id="ai-prod-id">ID: —</div>
+      </div>
+    </div>
+
+    <!-- Language selector -->
+    <div class="ai-lang-section">
+      <div class="ai-lang-label">Language</div>
+      <div class="ai-lang-grid" id="ai-lang-grid">
+        <button class="lang-chip active" data-lang="English">🇬🇧 EN</button>
+        <button class="lang-chip" data-lang="Russian">🇷🇺 RU</button>
+        <button class="lang-chip" data-lang="Ukrainian">🇺🇦 UA</button>
+        <button class="lang-chip" data-lang="Spanish">🇪🇸 ES</button>
+        <button class="lang-chip" data-lang="French">🇫🇷 FR</button>
+        <button class="lang-chip" data-lang="German">🇩🇪 DE</button>
+        <button class="lang-chip" data-lang="Italian">🇮🇹 IT</button>
+        <button class="lang-chip" data-lang="Polish">🇵🇱 PL</button>
+        <button class="lang-chip" data-lang="Portuguese">🇵🇹 PT</button>
+        <button class="lang-chip" data-lang="Chinese">🇨🇳 ZH</button>
+        <button class="lang-chip" data-lang="Japanese">🇯🇵 JA</button>
+        <button class="lang-chip" data-lang="Korean">🇰🇷 KO</button>
+      </div>
+    </div>
+
+    <div class="ai-body" id="ai-body">
+      <div class="ai-load" id="ai-load">
+        <div class="ai-load-ring"><div class="ai-load-ring-inner">✦</div></div>
+        <div class="ai-load-text">
+          Аналізую відгуки продукту…<br>
+          <span class="ai-load-endpoint">GET /auth/getAiReview</span>
+        </div>
+      </div>
+
+      <div id="ai-result" style="display:none">
+        <div class="ai-result-badge-row">
+          <span class="ai-result-badge">✦ AI ANALYSIS</span>
+          <div class="ai-result-line"></div>
+        </div>
+        <div class="ai-result-text" id="ai-result-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const BASE = 'http://127.0.0.1:8000';
+let _products = [];
+let _currentProduct = null;
+
+/* ── Utils ── */
+function toast(msg, type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show '+type;
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='',3200);
+}
+function setBtn(id,loading,label=''){
+  const b=document.getElementById(id); if(!b)return;
+  b.disabled=loading; b.innerHTML=loading?'<span class="spinner"></span> Working…':label;
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function req(method,path,body){
+  const o={method,headers:{'Content-Type':'application/json'}};
+  if(body) o.body=JSON.stringify(body);
+  const r=await fetch(BASE+path,o);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json().catch(()=>({}));
+}
+
+/* Avatar */
+const AV_COLORS=[['#071a0f','#a8ff78'],['#071525','#00e5ff'],['#1a070b','#ff6b6b'],['#16150a','#ffd700'],['#12071a','#c77dff'],['#061420','#48cae4']];
+function getAv(u){const i=u.charCodeAt(0)%AV_COLORS.length;return{bg:AV_COLORS[i][0],fg:AV_COLORS[i][1],l:(u[0]||'?').toUpperCase()};}
+
+/* ── Navigation ── */
+function showTab(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const map={products:'view-products',create:'view-create',detail:'view-detail'};
+  document.getElementById(map[name]).classList.add('active');
+  if(name==='products'){document.querySelectorAll('.tab')[0].classList.add('active');loadProducts();}
+  if(name==='create')  {document.querySelectorAll('.tab')[1].classList.add('active');}
+}
+
+/* ── Health ── */
+async function checkHealth(){
+  const dot=document.getElementById('status-dot'),txt=document.getElementById('status-text');
+  try{await req('GET','/');dot.className='dot online';txt.textContent='API online';}
+  catch{dot.className='dot offline';txt.textContent='API offline';}
+}
+
+/* ── Products ── */
+async function loadProducts(){
+  const c=document.getElementById('products-container');
+  c.innerHTML='<div class="empty"><span class="spinner"></span></div>';
+  try{
+    const data=await req('GET','/auth/GetProducts');
+    if(Array.isArray(data)) _products=data;
+    else if(data&&Array.isArray(data.products)) _products=data.products;
+  }catch(e){
+    c.innerHTML=`<div class="empty"><p>Could not load products.<br><small>${esc(e.message)}</small></p></div>`;return;
+  }
+  renderProducts();
+}
+function renderProducts(){
+  const c=document.getElementById('products-container');
+  if(!_products.length){c.innerHTML='<div class="empty"><p>No products yet.</p></div>';return;}
+  const grid=document.createElement('div'); grid.className='products-grid';
+  _products.forEach(p=>{
+    const pid=p.id??p.product_id??p._id??'';
+    const card=document.createElement('div'); card.className='product-card'; card.id='product-'+pid;
+    card.innerHTML=`
+      <div class="p-id">ID: ${esc(pid)}</div>
+      <div class="p-name">${esc(p.name)}</div>
+      <div class="p-footer">
+        ${p.value?`<span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--acc3)">${esc(p.value)}</span>`:'<span></span>'}
+        <span style="font-size:0.75rem;color:var(--muted)">💬 View reviews →</span>
+      </div>`;
+    card.onclick=()=>openProduct(p); grid.appendChild(card);
+  });
+  c.innerHTML=''; c.appendChild(grid);
+}
+
+/* ── Product detail ── */
+async function openProduct(p){
+  const pid=String(p.id??p.product_id??p._id??'');
+  _currentProduct={...p, _pid: pid};
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-detail').classList.add('active');
+  document.getElementById('detail-breadcrumb').textContent=p.name;
+  document.getElementById('detail-name').textContent=p.name;
+  document.getElementById('detail-sub').textContent='Product ID: '+pid;
+  document.getElementById('d-id').textContent=pid;
+
+  // Reset AI button
+  const aiBtn = document.getElementById('ai-product-btn');
+  aiBtn.disabled = false;
+  aiBtn.innerHTML = '<span class="ai-icon">✦</span> AI Analysis';
+
+  const cardEl=document.getElementById('product-'+pid);
+  const rid=cardEl?cardEl.id.replace('product-',''):pid;
+  document.getElementById('rv-product-id').value=rid;
+  try{const d=await req('POST','/get',{product_id:rid});if(d.name)document.getElementById('detail-name').textContent=d.name;}catch{}
+  loadReviews(rid);
+}
+
+/* ── Reviews ── */
+async function loadReviews(pid){
+  const c=document.getElementById('reviews-container');
+  c.innerHTML='<div class="empty"><span class="spinner"></span></div>';
+  try{
+    const data=await req('GET',`/get_reviews_by_id?id=${encodeURIComponent(pid)}`);
+    const list=Array.isArray(data)?data:(data.reviews||[]);
+    if(!list.length){c.innerHTML='<div class="empty"><p>No reviews yet. Be the first!</p></div>';return;}
+    c.innerHTML=''; list.forEach(r=>appendReview(r,c));
+  }catch(e){
+    c.innerHTML=`<div class="empty"><p>Could not load reviews.<br><small>${esc(e.message)}</small></p></div>`;
+  }
+}
+function appendReview(r,container,prepend=false){
+  const el=document.createElement('div'); el.className='review-item';
+  const rid=r.id??r.review_id??r._id??''; el.id='review-'+rid;
+  const user=r.username||r.user||r.name||'anonymous';
+  const body=r.text||r.review_text||r.content||'';
+  const av=getAv(user);
+  el.innerHTML=`
+    <div class="review-top">
+      <div class="avatar" style="background:${av.bg};color:${av.fg};border-color:${av.fg}40">${av.l}</div>
+      <div class="review-meta">
+        <span class="review-username" style="color:${av.fg}">@${esc(user)}</span>
+        <span class="review-id">${rid?'review #'+esc(rid):''}</span>
+      </div>
+    </div>
+    <div class="review-text">${esc(body)}</div>`;
+  if(prepend&&container.firstChild) container.insertBefore(el,container.firstChild);
+  else container.appendChild(el);
+}
+
+/* ════════════════════════════════
+   AI MODAL — PRODUCT LEVEL
+════════════════════════════════ */
+// Detect browser language → map to enum
+const LANG_MAP = {
+  'uk':'Ukrainian','ru':'Russian','en':'English','es':'Spanish',
+  'fr':'French','de':'German','it':'Italian','pl':'Polish',
+  'pt':'Portuguese','zh':'Chinese','ja':'Japanese','ko':'Korean'
+};
+function detectLang(){
+  const loc = navigator.language || 'en';
+  const code = loc.slice(0,2).toLowerCase();
+  return LANG_MAP[code] || 'English';
+}
+
+let _activeLang = detectLang();
+
+// Wire language chips
+document.getElementById('ai-lang-grid').addEventListener('click', e => {
+  const chip = e.target.closest('.lang-chip');
+  if(!chip || chip.classList.contains('active')) return;
+  document.querySelectorAll('.lang-chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  _activeLang = chip.dataset.lang;
+  if(_currentProduct) fetchProductAI(_currentProduct._pid);
+});
+
+function openProductAI(){
+  if(!_currentProduct) return;
+  const pid = _currentProduct._pid;
+  const name = _currentProduct.name || 'Product';
+
+  // Set active lang chip to current
+  document.querySelectorAll('.lang-chip').forEach(c=>{
+    c.classList.toggle('active', c.dataset.lang === _activeLang);
+  });
+
+  // Fill modal product info
+  document.getElementById('ai-prod-name').textContent = name;
+  document.getElementById('ai-prod-id').textContent = 'ID: ' + pid;
+
+  // Reset state
+  document.getElementById('ai-load').style.display = 'flex';
+  document.getElementById('ai-result').style.display = 'none';
+  document.getElementById('ai-head-sub').textContent = 'Analyzing all reviews…';
+
+  // Open modal
+  document.getElementById('ai-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  fetchProductAI(pid);
+}
+
+function closeAI(){
+  document.getElementById('ai-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleOverlayClick(e){if(e.target===document.getElementById('ai-overlay'))closeAI();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAI();});
+
+async function fetchProductAI(pid){
+  // Show loader
+  document.getElementById('ai-load').style.display = 'flex';
+  document.getElementById('ai-result').style.display = 'none';
+  document.getElementById('ai-head-sub').textContent = `Analyzing in ${_activeLang}…`;
+  try{
+    const data = await req('GET', `/auth/getAiReview?id=${encodeURIComponent(pid)}&country_code=${encodeURIComponent(_activeLang)}`);
+
+    // Extract text — try common keys
+    let text = data.Response || data.review || data.ai_analysis || data.analysis || data.result || data.text;
+    if(!text) text = JSON.stringify(data, null, 2);
+
+    const el = document.getElementById('ai-result-text');
+    el.textContent = '';
+    el.classList.add('typing');
+
+    // Typewriter effect
+    let i = 0;
+    const speed = Math.max(10, Math.min(30, 2000 / text.length));
+    function type(){
+      if(i < text.length){
+        el.textContent += text[i++];
+        setTimeout(type, speed);
+      } else {
+        el.classList.remove('typing');
+      }
+    }
+
+    document.getElementById('ai-load').style.display = 'none';
+    document.getElementById('ai-result').style.display = 'block';
+    document.getElementById('ai-head-sub').textContent = `Analysis ready · ${_activeLang}`;
+    type();
+
+  } catch(e){
+    const el = document.getElementById('ai-result-text');
+    el.classList.remove('typing');
+    el.textContent = 'Error: ' + e.message;
+    document.getElementById('ai-head-sub').textContent = 'Request failed';
+    document.getElementById('ai-load').style.display = 'none';
+    document.getElementById('ai-result').style.display = 'block';
+  }
+}
+
+/* ── Create product ── */
+async function createProduct(){
+  const name=document.getElementById('cp-name').value.trim();
+  const value=document.getElementById('cp-value').value.trim();
+  if(!name){toast('Product name is required','err');return;}
+  setBtn('cp-btn',true);
+  try{
+    const body={name}; if(value) body.value=value;
+    const data=await req('POST','/CreateProduct',body);
+    _products.unshift((data&&(data.id||data.product_id||data._id))?data:{id:Date.now(),name,value,...data});
+    toast('Product created! ✓','ok');
+    document.getElementById('cp-name').value='';
+    document.getElementById('cp-value').value='';
+    showTab('products');
+  }catch(e){toast('Failed: '+e.message,'err');}
+  finally{setBtn('cp-btn',false,'Create Product');}
+}
+
+/* ── Create review ── */
+async function createReview(){
+  const username=document.getElementById('rv-username').value.trim();
+  const text=document.getElementById('rv-text').value.trim();
+  const product_id=document.getElementById('rv-product-id').value;
+  if(!username){toast('Username is required','err');return;}
+  if(!text){toast('Review text is required','err');return;}
+  if(!product_id){toast('No product selected','err');return;}
+  setBtn('rv-btn',true);
+  try{
+    const data=await req('POST','/CreateReview',{username,text,product_id});
+    toast('Review posted! ✓','ok');
+    document.getElementById('rv-username').value='';
+    document.getElementById('rv-text').value='';
+    const c=document.getElementById('reviews-container');
+    if(c.querySelector('.empty')) c.innerHTML='';
+    appendReview(data||{username,text,id:Date.now()},c,true);
+  }catch(e){toast('Failed: '+e.message,'err');}
+  finally{setBtn('rv-btn',false,'Post Review');}
+}
+
+/* ── Boot ── */
+checkHealth(); setInterval(checkHealth,30000); loadProducts();
+</script>
+</body>
+</html>

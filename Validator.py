@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 class LanguageEnum(str, Enum):
     EN = "English"
@@ -17,4 +17,6 @@ class CreateReview(BaseModel):
     username: str
     product_id: int
     text: str
-
+class CreateProduct(BaseModel):
+    name:str
+    value:str = Field(pattern=r'^\d+(\.\d+)?[€$£]$')

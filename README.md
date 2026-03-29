@@ -79,7 +79,7 @@ pip install -r requirements.txt
 Refactor `.env.example` to `.env` and fill in your values:
 
 ```bash
-cp .env.example.example .env.example
+cp .env.example .env
 ```
 
 ```env

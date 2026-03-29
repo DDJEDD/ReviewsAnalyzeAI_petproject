@@ -6,12 +6,16 @@ class Service:
         self.session = session
         self.ProductDirectory = ProductRepository
         self.ReviewRepository = ReviewRepository
-    async def create_product(self, name):
+    async def create_product(self, name:str, value:str ):
         async with self.session.begin():
             if await self.ProductDirectory.CheckProduct(name):
                 raise ProductAlreadyExists()
-            await self.ProductDirectory.createProduct(name)
+            await self.ProductDirectory.createProduct(name,value)
         return {"Status":"Successful"}
+    async def get_products(self):
+        reviews = await self.ProductDirectory.GetProducts()
+        return reviews
+
     async def add_review(self,CreateReview:CreateReview):
         async with self.session.begin():
             if not await self.ProductDirectory.CheckProduct_by_id(CreateReview.product_id):
@@ -21,7 +25,4 @@ class Service:
 
     async def get_reviews_by_id(self, id: int):
         reviews = await self.ReviewRepository.get_All_reviews_from_one_product(id)
-        return [
-            f"товар: {r.product.name}|отзыв: {r.text} "
-            for r in reviews
-        ]
+        return [{"name": r.username, "text": r.text} for r in reviews]
