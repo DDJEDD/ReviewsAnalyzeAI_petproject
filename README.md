@@ -6,7 +6,7 @@ REST API built with **FastAPI**, PostgreSQL, Bearer Token authentication, and ex
 ## 📁 Project Structure
 
 ```
-pythonProject12/
+ReviewsAnalyzeAI_petproject/
 ├── Database/
 │   ├── database.py          # PostgreSQL connection
 │   └── models.py            # SQLAlchemy models
