@@ -40,7 +40,8 @@ ReviewsAnalyzeAI_petproject/
 | `POST` | `/CreateProduct`     | Create a new product     |
 | `POST` | `/CreateReview`      | Create a review          |
 | `GET`  | `/get_reviews_by_id` | Get reviews by ID        |
-| `POST` | `/get`               | Get detailed item info   |
+| `GET ` | `/getAiReview`       | Get detailed item info   |
+| `GET ` | `/GetProducts`       | Get Products list        |
 | `GET`  | `/`                  | Health check             |
 
 Swagger UI available at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
